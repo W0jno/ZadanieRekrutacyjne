@@ -3,9 +3,9 @@ const { chromium } = require("playwright-extra");
 const stealth = require("puppeteer-extra-plugin-stealth")();
 
 const PROXY_USERNAME = "scrapeops.headless_browser_mode=true";
-const PROXY_PASSWORD = "a778b547-9eda-4034-8d52-8ccfdb67014d"; // <-- enter your API_Key here
-const PROXY_SERVER = "proxy.scrapeops.io";
-const PROXY_SERVER_PORT = "5353";
+const PROXY_PASSWORD = "a778b547-9eda-4034-8d52-8ccfdb67014d"; // ukryj to debilu przed wyslaniem
+const PROXY_SERVER = "proxy.scrapeops.io:5353";
+//const PROXY_SERVER_PORT = "5353";
 
 const randomTime = () => {
   return Math.floor(Math.random() * 2000) + 1000;
@@ -32,15 +32,15 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
 (async () => {
   chromium.use(stealth);
   const browser = await chromium.launch({
-    headless: true,
-    proxy: {
+    headless: false,
+    /* proxy: {
       server: `http://${PROXY_SERVER}:${PROXY_SERVER_PORT}`,
       username: PROXY_USERNAME,
       password: PROXY_PASSWORD,
-    },
+    }, */
   });
 
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+  const context = await browser.newContext();
 
   const page = await context.newPage();
 
@@ -49,9 +49,12 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
 
   for (let pageNumber = 1; pageNumber <= totalPagesNumber; pageNumber++) {
     try {
-      await page.setDefaultTimeout(30000); // Increased timeout value
-      await page.goto(`${url}?p=${pageNumber}`, { timeout: 180000 });
-      await page.waitForTimeout(4000);
+      await page.setDefaultTimeout(30000);
+      await page.goto(
+        `https://proxy.scrapeops.io/v1/?api_key=a778b547-9eda-4034-8d52-8ccfdb67014d&url=${url}?p=${pageNumber}&render_js=true&residential=true&country=us`,
+        { timeout: 180000 }
+      );
+      //await page.waitForTimeout(4000);
       await page.waitForLoadState("load");
       await page.waitForSelector("article[data-verification-id]");
       await page.waitForTimeout(randomTime());
@@ -67,6 +70,7 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
             const priceElement = element.querySelector(
               ".mli8_k4.msa3_z4.mqu1_1.mp0t_ji.m9qz_yo.mgmw_qw.mgn2_27.mgn2_30_s"
             );
+
             const price = priceElement?.textContent?.trim();
             const isPromoted =
               element.getAttribute("data-analytics-view-custom-context") ===
@@ -75,21 +79,22 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
               element.querySelector(
                 ".mp0t_0a.mgn2_12.mqu1_16.mli8_k4.mgmw_3z.mp4t_4.mryx_0.mqen_32"
               )?.textContent === "Promowane";
-            const seller = element.querySelector(
-              ".mp0t_0a.mgmw_wo.mqu1_21.mj9z_5r.mli8_k4.mqen_m6.l1fas.mgn2_12"
-            )?.textContent;
+
+            const sellerName = element
+              .querySelector("a.mp0t_0a.mgmw_wo.mqu1_21")
+              ?.textContent?.trim();
+
             return {
               title: title,
               price: price,
               url: url,
-              seller: seller,
+              seller: sellerName,
               isPromoted: isPromoted,
               isSponsored: isSponsored,
             };
           });
         }
       );
-
       console.log(items);
     } catch (error) {
       console.error("Error:", error);
