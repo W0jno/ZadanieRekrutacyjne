@@ -18,6 +18,7 @@ const moveMouse = async (page) => {
 
 const exportDataToCSV = async (db) => {
   try {
+    await db;
     const rows = await db.all("SELECT * FROM allegro_products");
 
     if (rows.length === 0) {
@@ -26,13 +27,13 @@ const exportDataToCSV = async (db) => {
     }
 
     const csvData = rows.map((row) => {
-      return `${row.id},${row.url},${row.title},${row.price},${row.seller},${row.if_promoted},${row.if_sponsored}`;
+      return `${row.id};${row.url};${row.title};${row.price};${row.seller};${row.if_promoted};${row.if_sponsored}`;
     });
 
-    const header = "id,url,title,price,seller,if_promoted,if_sponsored\n";
+    const header = "id;url;title;price;seller;if_promoted;if_sponsored\n";
     const csvContent = header + csvData.join("\n");
 
-    fs.writeFileSync("./allegro_products.csv", csvContent);
+    await fs.writeFile("./allegro_products.csv", csvContent);
     console.log("Data exported to allegro_products.csv successfully.");
   } catch (error) {
     console.error("Error exporting data to CSV:", error);
@@ -105,16 +106,12 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
     `);
 
   await page.goto(`${url}`, { timeout: 180000 });
+  const consentButton = await page.$('button[data-role="accept-consent"]');
   for (let pageNumber = 1; pageNumber <= totalPagesNumber; pageNumber++) {
     try {
       await moveMouse(page);
-      const consentButton = await page.$('button[data-role="accept-consent"]');
-      console.log(`ITERATION ${pageNumber}: ${consentButton}`);
-      if (consentButton) {
-        await page.waitForTimeout(randomTime());
-        await consentButton.click();
-        await page.waitForTimeout(randomTime());
-      }
+      const pageURL = await page.url();
+      console.log(`ITERATION ${pageNumber}: ${pageURL}`);
       await moveMouse(page);
       await page.setDefaultTimeout(30000);
       await page.waitForTimeout(randomTime());
