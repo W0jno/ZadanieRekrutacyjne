@@ -12,9 +12,16 @@
     "@types/node": "^20.14.6"
   },
   "dependencies": {
+    "browser-pool": "^3.1.4",
+    "dotenv": "^16.4.5",
+    "fingerprint-generator": "^2.1.52",
+    "fingerprint-injector": "^2.1.52",
     "playwright": "^1.44.1",
     "playwright-extra": "^4.3.6",
     "playwright-extra-plugin-stealth": "^0.0.1",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "playwright-with-fingerprints": "^1.5.0",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
   }
 }
