@@ -1,9 +1,13 @@
-const { chromium, firefox } = require("playwright-extra");
-const stealth = require("puppeteer-extra-plugin-stealth")();
 const sqlite3 = require("sqlite3").verbose();
 const { plugin } = require("playwright-with-fingerprints");
 const { open } = require("sqlite");
+const fs = require("fs").promises;
 require("dotenv").config();
+
+//Change totalPagesNumber for more pages to mine
+const totalPagesNumber = 20;
+//Change url for different site
+const url = `https://allegro.pl/kategoria/sluchawki-66887`;
 
 const randomTime = () => {
   return Math.floor(Math.random() * 2000) + 1000;
@@ -72,19 +76,14 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
   });
 
   plugin.useFingerprint(fingerprint);
-  //firefox.use(stealth);
+
   const browser = await plugin.launch({
     headless: true,
     slowMo: 2000,
     userAgent: userAgents[randomIndex],
   });
 
-  //const context = await browser.newContext();
-
   const page = await browser.newPage();
-
-  const totalPagesNumber = 20;
-  const url = `https://allegro.pl/kategoria/sluchawki-66887`;
 
   const db = await open({
     filename: "./allegro_products.db",
@@ -106,7 +105,8 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
     `);
 
   await page.goto(`${url}`, { timeout: 180000 });
-  const consentButton = await page.$('button[data-role="accept-consent"]');
+  await page.waitForTimeout(randomTime());
+  await page.locator('button[data-role="accept-consent"]').click();
   for (let pageNumber = 1; pageNumber <= totalPagesNumber; pageNumber++) {
     try {
       await moveMouse(page);
@@ -173,9 +173,6 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
         );
       }
       await page.waitForTimeout(randomTime());
-      await page.evaluate(() => {
-        window.scrollBy(0, window.innerHeight);
-      });
       await page.waitForTimeout(randomTime());
       await page.click('a[rel="next"]');
     } catch (error) {
@@ -184,5 +181,5 @@ const randomIndex = Math.floor(Math.random() * userAgents.length);
   }
   await exportDataToCSV(db);
   await browser.close();
-  await connection.end();
+  await db.close();
 })();
